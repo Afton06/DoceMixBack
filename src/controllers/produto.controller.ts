@@ -3,11 +3,26 @@ import prisma from '../prisma'
 
 class ProdutoController {
   static async findAll(req: Request, res: Response) {
-    const produtos = await prisma.produto.findMany({
+  const page = Number(req.query.page) || 1
+  const limit = Number(req.query.limit) || 10
+  const skip = (page - 1) * limit
+
+  const [produtos, total] = await Promise.all([
+    prisma.produto.findMany({
+      skip,
+      take: limit,
       include: { categoria: true }
-    })
-    return res.status(200).json(produtos)
-  }
+    }),
+    prisma.produto.count()
+  ])
+
+  return res.status(200).json({
+    dados: produtos,
+    total,
+    pagina: page,
+    totalPaginas: Math.ceil(total / limit)
+  })
+}
 
   static async getById(req: Request, res: Response) {
     const id = String(req.params.id)

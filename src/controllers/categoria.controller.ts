@@ -3,9 +3,22 @@ import prisma from '../prisma'
 
 class CategoriaController {
   static async findAll(req: Request, res: Response) {
-    const categorias = await prisma.categoria.findMany()
-    return res.status(200).json(categorias)
-  }
+  const page = Number(req.query.page) || 1
+  const limit = Number(req.query.limit) || 10
+  const skip = (page - 1) * limit
+
+  const [categorias, total] = await Promise.all([
+    prisma.categoria.findMany({ skip, take: limit }),
+    prisma.categoria.count()
+  ])
+
+  return res.status(200).json({
+    dados: categorias,
+    total,
+    pagina: page,
+    totalPaginas: Math.ceil(total / limit)
+  })
+}
 
   static async getById(req: Request, res: Response) {
     const id = String(req.params.id)
