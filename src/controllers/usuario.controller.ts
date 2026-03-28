@@ -1,28 +1,29 @@
+import bcrypt from 'bcryptjs'
 import { Request, Response } from 'express'
 import prisma from '../prisma'
 
 class UsuarioController {
   static async findAll(req: Request, res: Response) {
-  const page = Number(req.query.page) || 1
-  const limit = Number(req.query.limit) || 10
-  const skip = (page - 1) * limit
+    const page = Number(req.query.page) || 1
+    const limit = Number(req.query.limit) || 10
+    const skip = (page - 1) * limit
 
-  const [usuarios, total] = await Promise.all([
-    prisma.usuario.findMany({
-      skip,
-      take: limit,
-      select: { id: true, nome: true, email: true, cpf: true, createdAt: true }
-    }),
-    prisma.usuario.count()
-  ])
+    const [usuarios, total] = await Promise.all([
+      prisma.usuario.findMany({
+        skip,
+        take: limit,
+        select: { id: true, nome: true, email: true, cpf: true, createdAt: true }
+      }),
+      prisma.usuario.count()
+    ])
 
-  return res.status(200).json({
-    dados: usuarios,
-    total,
-    pagina: page,
-    totalPaginas: Math.ceil(total / limit)
-  })
-}
+    return res.status(200).json({
+      dados: usuarios,
+      total,
+      pagina: page,
+      totalPaginas: Math.ceil(total / limit)
+    })
+  }
 
   static async getById(req: Request, res: Response) {
     const id = String(req.params.id)
@@ -67,8 +68,10 @@ class UsuarioController {
       return res.status(400).json({ message: 'CPF já cadastrado' })
     }
 
+    const senhaCriptografada = await bcrypt.hash(senha, 10)
+
     const usuario = await prisma.usuario.create({
-      data: { nome, email, senha, cpf }
+      data: { nome, email, senha: senhaCriptografada, cpf }
     })
 
     return res.status(201).json({
@@ -90,9 +93,13 @@ class UsuarioController {
       return res.status(404).json({ message: 'Usuário não encontrado' })
     }
 
+    const senhaCriptografada = senha
+      ? await bcrypt.hash(senha, 10)
+      : usuario.senha
+
     const atualizado = await prisma.usuario.update({
       where: { id },
-      data: { nome, senha, cpf }
+      data: { nome, senha: senhaCriptografada, cpf }
     })
 
     return res.status(200).json({

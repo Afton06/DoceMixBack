@@ -13,5 +13,5 @@ app.use('/produtos', produtoRouter)
 app.use('/usuarios', usuarioRouter)
 
 app.listen(PORT, () => {
-  console.log(`Server da Estação do Forno rodando na porta ${PORT}`)
+  console.log(`Servoidor da Estação do Forno rodando na porta ${PORT}`)
 })
