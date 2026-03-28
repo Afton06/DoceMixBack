@@ -1,6 +1,7 @@
 import bcrypt from 'bcryptjs'
 import { Request, Response } from 'express'
 import prisma from '../prisma'
+import { validarEmail, validarCPF, validarSenha } from '../utils/validacoes'
 
 class UsuarioController {
   static async findAll(req: Request, res: Response) {
@@ -50,12 +51,24 @@ class UsuarioController {
       return res.status(400).json({ message: 'Email é obrigatório' })
     }
 
+    if (!validarEmail(email)) {
+      return res.status(400).json({ message: 'Email inválido' })
+    }
+
     if (!senha || senha === '') {
       return res.status(400).json({ message: 'Senha é obrigatória' })
     }
 
+    if (!validarSenha(senha)) {
+      return res.status(400).json({ message: 'Senha deve ter no mínimo 8 caracteres, letra maiúscula, minúscula, número e caractere especial' })
+    }
+
     if (!cpf || cpf === '') {
       return res.status(400).json({ message: 'CPF é obrigatório' })
+    }
+
+    if (!validarCPF(cpf)) {
+      return res.status(400).json({ message: 'CPF inválido' })
     }
 
     const emailExiste = await prisma.usuario.findUnique({ where: { email } })
@@ -91,6 +104,14 @@ class UsuarioController {
 
     if (!usuario) {
       return res.status(404).json({ message: 'Usuário não encontrado' })
+    }
+
+    if (cpf && !validarCPF(cpf)) {
+      return res.status(400).json({ message: 'CPF inválido' })
+    }
+
+    if (senha && !validarSenha(senha)) {
+      return res.status(400).json({ message: 'Senha deve ter no mínimo 8 caracteres, letra maiúscula, minúscula, número e caractere especial' })
     }
 
     const senhaCriptografada = senha
